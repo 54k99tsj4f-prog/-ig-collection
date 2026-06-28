@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>手機收藏 · 整理中</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0F0F12;
+    color: #E8E4DC;
+    font-family: -apple-system, 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 48px 20px 40px;
+  }
+  .icon { font-size: 36px; margin-bottom: 16px; }
+  .title { font-size: 20px; font-weight: 700; color: #F0EDE6; margin-bottom: 6px; }
+  .sub { font-size: 13px; color: #6B6B7A; margin-bottom: 32px; line-height: 1.6; text-align: center; }
+
+  .url-box {
+    width: 100%; max-width: 480px;
+    background: #1A1A20; border: 1px solid #2E2E38;
+    border-radius: 12px; padding: 14px;
+    font-size: 13px; color: #5A5A7A;
+    word-break: break-all; margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .btn {
+    width: 100%; max-width: 480px;
+    padding: 15px; border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: inherit; letter-spacing: 0.3px;
+    transition: opacity 0.2s;
+    margin-bottom: 10px;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #4A4ABF; color: #F0EDE6; }
+  .btn-notion { background: #1E4A2A; color: #7ADF8A; border: 1px solid #3A7A4A; }
+
+  .status-box {
+    width: 100%; max-width: 480px;
+    border-radius: 12px; padding: 16px;
+    margin-bottom: 12px; font-size: 13px; line-height: 1.6;
+  }
+  .status-loading { background: #1A1A28; border: 1px solid #3A3A5A; color: #8A8ACC; }
+  .status-result  { background: #1A1A20; border: 1px solid #2E2E38; color: #C8C4BC; }
+  .status-success { background: #1A2A1A; border: 1px solid #3A6A40; color: #7ADF8A; text-align: center; }
+  .status-error   { background: #2A1A1A; border: 1px solid #5A2A2A; color: #E07070; }
+
+  .label {
+    font-size: 10px; letter-spacing: 2px; color: #5A5A6A;
+    text-transform: uppercase; margin-bottom: 8px; display: block;
+  }
+  .tag {
+    display: inline-block; font-size: 11px; padding: 3px 9px;
+    border-radius: 5px; margin: 2px;
+  }
+  .tag-theme { background: #252540; color: #8A8ADF; }
+  .tag-topic { background: #252530; color: #A8A4C0; border: 1px solid #3A3A4A; }
+  .tag-use   { background: #1E2830; color: #7AB8C8; border: 1px solid #2A4050; }
+
+  .step-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+  .step-num {
+    flex-shrink: 0; width: 20px; height: 20px;
+    background: #252530; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #6B6BDF; margin-top: 2px;
+  }
+  .result-title { font-size: 17px; font-weight: 700; color: #F0EDE6; margin-bottom: 10px; line-height: 1.4; }
+  .result-summary { font-size: 13px; color: #A8A4B4; line-height: 1.7; margin-bottom: 14px; }
+  .notion-link { display: block; font-size: 12px; color: #5A9A6A; margin-top: 6px; text-decoration: none; }
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid #3A3A5A; border-top-color: #8A8ACC;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    margin-right: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="icon">📱</div>
+<div class="title">手機收藏</div>
+<div class="sub">從 IG 分享過來的連結<br>自動整理存入 Notion</div>
+
+<div class="url-box" id="urlBox">等待連結中…</div>
+
+<button class="btn btn-primary" id="btnAnalyze" onclick="startAnalyze()" disabled>
+  ✦ 開始整理
+</button>
+
+<div id="statusArea"></div>
+
+<button class="btn btn-notion" id="btnNotion" onclick="saveToNotion()" style="display:none">
+  → 存入 Notion 手機收藏
+</button>
+
+<script>
+const NOTION_DS_ID = "b8b651d1-ef26-4f4a-b49a-06964efb091e";
+
+const SYSTEM_PROMPT = `你是一個幫我整理 IG 收藏的「知識整理助理」，要把我丟給你的 IG 連結或貼文內容，整理成可以存進 Notion 資料庫的一筆紀錄。請嚴格依照以下規則與欄位輸出，最後只用 JSON 回覆，不要加任何解說文字。
+
+主題大類（必選一）：工作・技能, 財務・生意, 數位・工具, 居家・空間, 旅遊・地點, 健康・外貌, 心理・內在, 娛樂, 寵物・生活感
+
+次分類（1~3個）：AI工具, Chat gpt, Excel, Ai, Ps, 印刷包裝, 印刷工藝, 盒型, 文書處理, 文件類, 相機, 公司報稅, 稅務, 訂閱省錢, 手機, 網站, 網路小妙招, 電器小知識, 家裡清潔, 家裡裝修, 房屋, 日本, 日本住宿, 台灣旅遊交通工具, 大陸旅遊, 美食, 毛孔, 運動, 減肥, 鞋子衣服清潔, 心理, 療癒金句, 算命, 短視頻影劇, 貓, 紙紮, 批貨, 有空逛
+
+用途（1~2個）：想實作的教學, 靈感／參考, 之後要分享給客戶, 個人生活改善, 純娛樂
+
+輸出欄位：title（15字內）, theme, topics（陣列）, use_case（陣列）, summary（2~3句）, steps（3~7個可執行步驟陣列）, notes（注意事項，沒有留空字串）, source_url
+
+只用 JSON 回覆，不要 Markdown：
+{"title":"","theme":"","topics":[],"use_case":[],"summary":"","steps":[],"notes":"","source_url":""}`;
+
+let igUrl = "";
+let resultData = null;
+
+// ── 從 URL 參數讀取 IG 連結 ──────────────────────────
+window.onload = function() {
+  const params = new URLSearchParams(window.location.search);
+  const url = params.get("url") || params.get("u") || params.get("link") || "";
+  if (url) {
+    igUrl = decodeURIComponent(url);
+    document.getElementById("urlBox").textContent = igUrl;
+    document.getElementById("btnAnalyze").disabled = false;
+    // 如果有連結自動開始
+    startAnalyze();
+  } else {
+    document.getElementById("urlBox").textContent = "（未收到連結，請從 IG 重新分享）";
+  }
+};
+
+// ── AI 整理 ──────────────────────────────────────────
+async function startAnalyze() {
+  document.getElementById("btnAnalyze").disabled = true;
+  document.getElementById("btnNotion").style.display = "none";
+  setStatus("loading", '<span class="spinner"></span>AI 整理中，請稍候…');
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: igUrl || "這是一則 IG 貼文，請用以上分類整理。" }],
+      }),
+    });
+    const data = await res.json();
+    const text = data.content?.map(b => b.text || "").join("") || "";
+    const clean = text.replace(/```json|```/g, "").trim();
+    resultData = JSON.parse(clean);
+    showResult(resultData);
+    document.getElementById("btnNotion").style.display = "block";
+  } catch(e) {
+    setStatus("error", "整理失敗，請重試。");
+    document.getElementById("btnAnalyze").disabled = false;
+  }
+}
+
+// ── 顯示結果 ─────────────────────────────────────────
+function showResult(r) {
+  const steps = (r.steps || []).map((s, i) =>
+    `<div class="step-row"><div class="step-num">${i+1}</div><div>${s}</div></div>`
+  ).join("");
+
+  const topics = (r.topics || []).map(t => `<span class="tag tag-topic">${t}</span>`).join("");
+  const uses   = (r.use_case || []).map(u => `<span class="tag tag-use">${u}</span>`).join("");
+
+  setStatus("result", `
+    <div class="result-title">${r.title}</div>
+    <span class="tag tag-theme">${r.theme}</span>
+    <div style="margin:8px 0">${topics}${uses}</div>
+    <div class="result-summary">${r.summary}</div>
+    ${steps.length ? `<span class="label">執行步驟</span>${steps}` : ""}
+    ${r.notes ? `<div style="margin-top:10px;color:#B8A860;font-size:12px">⚠ ${r.notes}</div>` : ""}
+  `);
+}
+
+// ── 存入 Notion ──────────────────────────────────────
+async function saveToNotion() {
+  if (!resultData) return;
+  const btn = document.getElementById("btnNotion");
+  btn.disabled = true;
+  btn.textContent = "存入中…";
+
+  const stepsText = (resultData.steps || []).map((s,i) => `${i+1}. ${s}`).join("\n");
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: "你是 Notion MCP 操作助理。使用者給你一筆 JSON 資料，請用 notion-create-pages 工具存入指定資料庫。完成後只回覆頁面 URL，不說其他話。",
+        messages: [{ role: "user", content:
+          `存入 data_source_id: ${NOTION_DS_ID}\n${JSON.stringify({
+            標題: resultData.title,
+            主題大類: resultData.theme,
+            次分類: resultData.topics,
+            用途: resultData.use_case,
+            摘要: resultData.summary,
+            步驟: stepsText,
+            注意事項: resultData.notes || "",
+            來源網址: resultData.source_url || "",
+            狀態: "Inbox",
+          }, null, 2)}`
+        }],
+        mcp_servers: [{ type: "url", url: "https://mcp.notion.com/mcp", name: "notion-mcp" }]
+      }),
+    });
+    const data = await res.json();
+    const text = data.content?.filter(b=>b.type==="text").map(b=>b.text).join("") || "";
+    const urlMatch = text.match(/https:\/\/[^\s"]+notion[^\s"]+/);
+    const pageUrl = urlMatch?.[0] || "";
+
+    setStatus("success", `
+      ✓ 已存入 Notion 手機收藏
+      ${pageUrl ? `<a class="notion-link" href="${pageUrl}" target="_blank">點此開啟頁面 →</a>` : ""}
+    `);
+    btn.style.display = "none";
+  } catch(e) {
+    setStatus("error", "儲存失敗，請重試。");
+    btn.disabled = false;
+    btn.textContent = "→ 存入 Notion 手機收藏";
+  }
+}
+
+function setStatus(type, html) {
+  const area = document.getElementById("statusArea");
+  area.innerHTML = `<div class="status-box status-${type}">${html}</div>`;
+}
+</script>
+</body>
+</html>

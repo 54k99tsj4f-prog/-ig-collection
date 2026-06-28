@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>手機收藏 · 整理中</title>
+<title>手機收藏</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -14,33 +14,36 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 48px 20px 40px;
+    padding: 48px 20px 60px;
   }
-  .icon { font-size: 36px; margin-bottom: 16px; }
-  .title { font-size: 20px; font-weight: 700; color: #F0EDE6; margin-bottom: 6px; }
+  .icon { font-size: 36px; margin-bottom: 14px; }
+  .title { font-size: 22px; font-weight: 700; color: #F0EDE6; margin-bottom: 6px; }
   .sub { font-size: 13px; color: #6B6B7A; margin-bottom: 32px; line-height: 1.6; text-align: center; }
 
-  .url-box {
+  .input-area {
     width: 100%; max-width: 480px;
     background: #1A1A20; border: 1px solid #2E2E38;
     border-radius: 12px; padding: 14px;
-    font-size: 13px; color: #5A5A7A;
-    word-break: break-all; margin-bottom: 20px;
-    line-height: 1.5;
+    font-size: 14px; color: #D8D4CC;
+    min-height: 80px; margin-bottom: 12px;
+    line-height: 1.6; word-break: break-all;
+  }
+  textarea.input-area {
+    resize: vertical; outline: none;
+    font-family: inherit;
   }
 
   .btn {
     width: 100%; max-width: 480px;
     padding: 15px; border: none; border-radius: 12px;
     font-size: 16px; font-weight: 700; cursor: pointer;
-    font-family: inherit; letter-spacing: 0.3px;
-    transition: opacity 0.2s;
-    margin-bottom: 10px;
+    font-family: inherit; transition: opacity 0.2s;
+    margin-bottom: 10px; display: block;
   }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-paste  { background: #3A3A6A; color: #A8A8FF; border: 1px solid #5A5AAF; }
   .btn-primary { background: #4A4ABF; color: #F0EDE6; }
-  .btn-notion { background: #1E4A2A; color: #7ADF8A; border: 1px solid #3A7A4A; }
+  .btn-notion  { background: #1E4A2A; color: #7ADF8A; border: 1px solid #3A7A4A; }
 
   .status-box {
     width: 100%; max-width: 480px;
@@ -52,34 +55,17 @@
   .status-success { background: #1A2A1A; border: 1px solid #3A6A40; color: #7ADF8A; text-align: center; }
   .status-error   { background: #2A1A1A; border: 1px solid #5A2A2A; color: #E07070; }
 
-  .label {
-    font-size: 10px; letter-spacing: 2px; color: #5A5A6A;
-    text-transform: uppercase; margin-bottom: 8px; display: block;
-  }
-  .tag {
-    display: inline-block; font-size: 11px; padding: 3px 9px;
-    border-radius: 5px; margin: 2px;
-  }
+  .label { font-size: 10px; letter-spacing: 2px; color: #5A5A6A; text-transform: uppercase; margin-bottom: 8px; display: block; }
+  .tag { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 5px; margin: 2px; }
   .tag-theme { background: #252540; color: #8A8ADF; }
   .tag-topic { background: #252530; color: #A8A4C0; border: 1px solid #3A3A4A; }
   .tag-use   { background: #1E2830; color: #7AB8C8; border: 1px solid #2A4050; }
-
-  .step-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
-  .step-num {
-    flex-shrink: 0; width: 20px; height: 20px;
-    background: #252530; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700; color: #6B6BDF; margin-top: 2px;
-  }
-  .result-title { font-size: 17px; font-weight: 700; color: #F0EDE6; margin-bottom: 10px; line-height: 1.4; }
+  .step-row  { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+  .step-num  { flex-shrink:0; width:20px; height:20px; background:#252530; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#6B6BDF; margin-top:2px; }
+  .result-title   { font-size: 17px; font-weight: 700; color: #F0EDE6; margin-bottom: 10px; line-height: 1.4; }
   .result-summary { font-size: 13px; color: #A8A4B4; line-height: 1.7; margin-bottom: 14px; }
-  .notion-link { display: block; font-size: 12px; color: #5A9A6A; margin-top: 6px; text-decoration: none; }
-  .spinner {
-    display: inline-block; width: 16px; height: 16px;
-    border: 2px solid #3A3A5A; border-top-color: #8A8ACC;
-    border-radius: 50%; animation: spin 0.7s linear infinite;
-    margin-right: 8px; vertical-align: middle;
-  }
+  .notion-link    { display: block; font-size: 12px; color: #5A9A6A; margin-top: 6px; text-decoration: none; }
+  .spinner { display:inline-block; width:16px; height:16px; border:2px solid #3A3A5A; border-top-color:#8A8ACC; border-radius:50%; animation:spin 0.7s linear infinite; margin-right:8px; vertical-align:middle; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
@@ -87,11 +73,15 @@
 
 <div class="icon">📱</div>
 <div class="title">手機收藏</div>
-<div class="sub">從 IG 分享過來的連結<br>自動整理存入 Notion</div>
+<div class="sub">從 IG 拷貝連結後<br>點「貼上連結」自動整理存入 Notion</div>
 
-<div class="url-box" id="urlBox">等待連結中…</div>
+<textarea class="input-area" id="inputBox" placeholder="或直接在這裡貼上 IG 連結 / 貼文文字…"></textarea>
 
-<button class="btn btn-primary" id="btnAnalyze" onclick="startAnalyze()" disabled>
+<button class="btn btn-paste" onclick="pasteFromClipboard()">
+  📋 貼上連結
+</button>
+
+<button class="btn btn-primary" id="btnAnalyze" onclick="startAnalyze()">
   ✦ 開始整理
 </button>
 
@@ -117,26 +107,32 @@ const SYSTEM_PROMPT = `你是一個幫我整理 IG 收藏的「知識整理助�
 只用 JSON 回覆，不要 Markdown：
 {"title":"","theme":"","topics":[],"use_case":[],"summary":"","steps":[],"notes":"","source_url":""}`;
 
-let igUrl = "";
 let resultData = null;
 
-// ── 從 URL 參數讀取 IG 連結 ──────────────────────────
-window.onload = function() {
-  const params = new URLSearchParams(window.location.search);
-  const url = params.get("url") || params.get("u") || params.get("link") || "";
-  if (url) {
-    igUrl = decodeURIComponent(url);
-    document.getElementById("urlBox").textContent = igUrl;
-    document.getElementById("btnAnalyze").disabled = false;
-    // 如果有連結自動開始
-    startAnalyze();
-  } else {
-    document.getElementById("urlBox").textContent = "（未收到連結，請從 IG 重新分享）";
+// ── 貼上剪貼板 ────────────────────────────────────────
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text) {
+      document.getElementById("inputBox").value = text;
+    } else {
+      alert("剪貼板是空的，請先在 IG 拷貝連結");
+    }
+  } catch(e) {
+    // 如果無法自動讀取，讓使用者手動貼
+    document.getElementById("inputBox").focus();
+    alert("請長按輸入框選擇「貼上」");
   }
-};
+}
 
-// ── AI 整理 ──────────────────────────────────────────
+// ── 開始整理 ──────────────────────────────────────────
 async function startAnalyze() {
+  const input = document.getElementById("inputBox").value.trim();
+  if (!input) {
+    alert("請先貼入 IG 連結或貼文內容");
+    return;
+  }
+
   document.getElementById("btnAnalyze").disabled = true;
   document.getElementById("btnNotion").style.display = "none";
   setStatus("loading", '<span class="spinner"></span>AI 整理中，請稍候…');
@@ -149,7 +145,7 @@ async function startAnalyze() {
         model: "claude-sonnet-4-6",
         max_tokens: 1000,
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: igUrl || "這是一則 IG 貼文，請用以上分類整理。" }],
+        messages: [{ role: "user", content: input }],
       }),
     });
     const data = await res.json();
@@ -160,16 +156,16 @@ async function startAnalyze() {
     document.getElementById("btnNotion").style.display = "block";
   } catch(e) {
     setStatus("error", "整理失敗，請重試。");
+  } finally {
     document.getElementById("btnAnalyze").disabled = false;
   }
 }
 
-// ── 顯示結果 ─────────────────────────────────────────
+// ── 顯示結果 ──────────────────────────────────────────
 function showResult(r) {
   const steps = (r.steps || []).map((s, i) =>
     `<div class="step-row"><div class="step-num">${i+1}</div><div>${s}</div></div>`
   ).join("");
-
   const topics = (r.topics || []).map(t => `<span class="tag tag-topic">${t}</span>`).join("");
   const uses   = (r.use_case || []).map(u => `<span class="tag tag-use">${u}</span>`).join("");
 
@@ -183,7 +179,7 @@ function showResult(r) {
   `);
 }
 
-// ── 存入 Notion ──────────────────────────────────────
+// ── 存入 Notion ───────────────────────────────────────
 async function saveToNotion() {
   if (!resultData) return;
   const btn = document.getElementById("btnNotion");
@@ -226,6 +222,8 @@ async function saveToNotion() {
       ${pageUrl ? `<a class="notion-link" href="${pageUrl}" target="_blank">點此開啟頁面 →</a>` : ""}
     `);
     btn.style.display = "none";
+    // 清空輸入框準備下一筆
+    document.getElementById("inputBox").value = "";
   } catch(e) {
     setStatus("error", "儲存失敗，請重試。");
     btn.disabled = false;
@@ -234,8 +232,8 @@ async function saveToNotion() {
 }
 
 function setStatus(type, html) {
-  const area = document.getElementById("statusArea");
-  area.innerHTML = `<div class="status-box status-${type}">${html}</div>`;
+  document.getElementById("statusArea").innerHTML =
+    `<div class="status-box status-${type}">${html}</div>`;
 }
 </script>
 </body>
